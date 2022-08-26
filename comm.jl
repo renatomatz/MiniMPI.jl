@@ -23,8 +23,6 @@ struct Comm{T, N<:Integer} <: AbstractComm{T, N}
     end
 end
 
-const UnbufferedComm{T} = Comm{T, 0}
-
 (Comm)(::Type{T}, N::Integer) where {T} = Comm{T, N}()
 (Comm)(N::Integer) = Comm(Any, N)
 
@@ -32,3 +30,8 @@ const UnbufferedComm{T} = Comm{T, 0}
 (Comm)() = Comm(Any, 0)
 
 getindex(comm::Comm, i...) = getindex(comm.mat, i...)
+
+const UnbufferedComm{T} = Comm{T, 0} where {T}
+
+(UnbufferedComm)(t::Type{T}) where {T} = Comm(t)
+(UnbufferedComm)() = Comm()
