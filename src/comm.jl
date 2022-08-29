@@ -43,6 +43,13 @@ const UnbufferedComm{T} = BaseComm{T, 0} where {T}
 
 const TaggedComm{S, T, N} = BaseComm{Tuple{S, T}, N} where {T, N}
 
+(TaggedComm)(::Type{S}, ::Type{T}, N::Integer) where {S, T} = TaggedComm{S, T, N}()
+(TaggedComm)(::Type{S}, ::Type{T}) where {S, T} = TaggedComm(S, T, 0)
+(TaggedComm)(::Type{T}, N::Integer) where {T} = TaggedComm(Int64, T, N)
+(TaggedComm)(::Type{T}) where {T} = TaggedComm(Int64, T, 0)
+(TaggedComm)(N::Integer) = TaggedComm(Int64, Any, N)
+(TaggedComm)() = TaggedComm(Any, 0)
+
 struct CollectiveComm{T} <: AbstractComm{T, 0}
 
     comm::BaseComm{T, 0}
