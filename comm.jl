@@ -38,7 +38,7 @@ getindex(comm::BaseComm, i...) = getindex(comm.mat, i...)
 
 const UnbufferedComm{T} = BaseComm{T, 0} where {T}
 
-(UnbufferedComm)(t::Type{T}) where {T} = BaseComm(t)
+(UnbufferedComm)(::Type{T}) where {T} = BaseComm(T)
 (UnbufferedComm)() = UnbufferedComm(Any)
 
 const TaggedComm{S, T, N} = BaseComm{Tuple{S, T}, N} where {T, N}
@@ -72,10 +72,10 @@ end
 (CollectiveComm)(::Type{T}) where {T} = CollectiveComm{T}()
 (CollectiveComm)() = CollectiveComm(Any)
 
-struct GeneralComm{T, N} <: AbstractComm{T, N}
+struct GeneralComm{S, T, N} <: AbstractComm{T, N}
 
     comm::BaseComm{T, N}
-    tagged::TaggedComm{Int64, T, N}
+    tagged::TaggedComm{S, T, N}
     collective::CollectiveComm{T}
 
     me::Int64
@@ -83,7 +83,7 @@ struct GeneralComm{T, N} <: AbstractComm{T, N}
 
     function GeneralComm{T, N}(p::Integer) where {T, N}
         comm = BaseComm{T, N}(p)
-        tagged = TaggedComm{Int64, T, N}(p)
+        tagged = TaggedComm{S, T, N}(p)
         collective = CollectiveComm{T}(p)
         me = myid()
         p = p
@@ -96,7 +96,9 @@ struct GeneralComm{T, N} <: AbstractComm{T, N}
 
 end
 
-(GeneralComm)(::Type{T}, N::Integer) where {T} = GeneralComm{T, N}()
-(GeneralComm)(::Type{T}) where {T} = GeneralComm(T, 0)
-(GeneralComm)(N::Integer) = GeneralComm(Any, N)
+(GeneralComm)(::Type{S}, ::Type{T}, N::Integer) where {S, T} = GeneralComm{S, T, N}()
+(GeneralComm)(::Type{S}, ::Type{T}) where {S, T} = GeneralComm(S, T, 0)
+(GeneralComm)(::Type{T}, N::Integer) where {T} = GeneralComm(Int64, T, N)
+(GeneralComm)(::Type{T}) where {T} = GeneralComm(Int64, T, 0)
+(GeneralComm)(N::Integer) = GeneralComm(Int64, Any, N)
 (GeneralComm)() = GeneralComm(Any, 0)

@@ -1,14 +1,10 @@
-function spawn_everywhere(expr::Expr)
+function mpiexec(f::Function, comm::Dict{AbstractComm})
     p = n_procs()
     fut = Vector{Future}(undef, p)
     for i in 1:p
-        fut[i] = @spawnat i eval(expr)
+        fut[i] = remotecall(f, i, comm)
     end
     fut
-end
-
-function get_item(p::Int, item::Symbol)
-    @fetchfrom p getfield(Main, item)
 end
 
 function make_comm_mat(::Type{T}, N::Integer, p::Int64)
