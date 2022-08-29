@@ -1,20 +1,18 @@
-function send(elem::T, dest::Integer, comm::Comm{T}) where {T}
+function send(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
      put!(comm[comm.me, dest], elem)
 end
 
-function recv(src::Integer, comm::Comm)
+function recv(src::Integer, comm::BaseComm)
     take!(comm[src, comm.me])
 end
 
-function isend(elem::T, dest::Integer, comm::Comm{T}) where {T}
+function isend(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
     @async send(comm, dest)
 end
 
-function irecv(src::Integer, comm::Comm)
+function irecv(src::Integer, comm::BaseComm)
     @async recv(comm, src)
 end
-
-const TaggedComm{S, T, N} = Comm{Tuple{S, T}, N} where {T, N}
 
 function send(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
     send((tag, elem), dest, comm)
@@ -42,4 +40,36 @@ end
 
 function irecv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
     @async recv(src, tag, comm)
+end
+
+function send(elem::T, dest::Integer, comm::GeneralComm{T}) where {T}
+    send(elem, dest, comm.comm)
+end
+
+function recv(src::Integer, comm::GeneralComm)
+    recv(src, comm.comm)
+end
+
+function isend(elem::T, dest::Integer, comm::GeneralComm{T}) where {T}
+    isend(src, dest, comm.comm)
+end
+
+function irecv(src::Integer, comm::GeneralComm)
+    irecv(src, comm.comm)
+end
+
+function send(elem::T, dest::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    send(elem, dest, tag, comm.tagged)
+end
+
+function recv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    recv(src, tag, comm.tagged)
+end
+
+function isend(elem::T, dest::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    isend(elem, dest, tag, comm.tagged)
+end
+
+function irecv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    irecv(src, tag, comm.tagged)
 end
