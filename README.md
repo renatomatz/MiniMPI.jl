@@ -1,4 +1,4 @@
-# MiniMPI
+# MiniMPI.jl
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/dev)

@@ -3,6 +3,9 @@ uuid = "8853dab6-425c-4f66-8a9f-42391422aa03"
 authors = ["Renato Zimmermann"]
 version = "0.1.0"
 
+[deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+
 [compat]
 julia = "1"
 
