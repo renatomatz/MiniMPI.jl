@@ -1,9 +1,5 @@
 using Distributed
 
-function make_comm_mat(::Type{T}, N::Integer, p::Int64) where {T}
-    reshape([RemoteChannel(()->Channel{T}(N)) for _ in 1:(p^2)], (p,p))
-end
-
 function asgn_expr(name, val)
     Expr(:(=), Symbol(name), val)
 end

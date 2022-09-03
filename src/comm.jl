@@ -5,17 +5,19 @@ abstract type AbstractComm{T, N<:Integer} end
 Base.size(::AbstractComm{T, N}) where {N} = N
 Base.eltype(::AbstractComm{T, N}) where {T} = T
 
+RemoteChannelVector{T} = Vector{RemoteChannel{Channel{T}}} where {T}
+
 struct BaseComm{T, N<:Integer} <: AbstractComm{T, N}
 
-    mat::Matrix{RemoteChannel{Channel{T}}}
+    ich::RemoteChannelVector{T}
+    och::RemoteChannelVector{T}
     me::Int64
     p::Int64
 
     function BaseComm{T, N}(p::Integer) where {T, N<:Integer}
-        # TODO: Make this matrix more targetted, such that refferences only
-        # exist between communicating processes.
-        mat = make_comm_mat(T, N, p)
-        new(mat, myid(), p)
+        ich = RemoteChannelVector{T}(undef, p)
+        och = RemoteChannelVector{T}(undef, p)
+        new(ich, och, myid(), p)
     end
 
     function BaseComm{T, N}() where {T, N<:Integer}
@@ -33,8 +35,6 @@ end
 (BaseComm)(::Type{T}) where {T} = BaseComm(T, 0)
 (BaseComm)(N::Integer) = BaseComm(Any, N)
 (BaseComm)() = BaseComm(Any, 0)
-
-getindex(comm::BaseComm, i...) = getindex(comm.mat, i...)
 
 const UnbufferedComm{T} = BaseComm{T, 0} where {T}
 

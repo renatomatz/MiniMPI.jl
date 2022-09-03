@@ -1,9 +1,9 @@
 function send(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
-     put!(comm[comm.me, dest], elem)
+     put!(comm.och[dest], elem)
 end
 
 function recv(src::Integer, comm::BaseComm)
-    take!(comm[src, comm.me])
+    take!(comm.ich[src])
 end
 
 function isend(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
@@ -30,7 +30,7 @@ function recv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
     for elem in backlog
         # As tagged receives don't care for order, this approach won't cause
         # bugs from possibly miss-ordering channel elements.
-        @async put!(comm[src, comm.me], elem)
+        @async put!(comm.ich[src], elem)
     end
 end
 
