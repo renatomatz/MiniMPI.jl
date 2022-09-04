@@ -7,7 +7,7 @@ function recv(src::Integer, comm::BaseComm)
 end
 
 function isend(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
-    @async send(comm, dest)
+    @async send(elem, dest, comm)
 end
 
 function irecv(src::Integer, comm::BaseComm)
@@ -73,3 +73,5 @@ end
 function irecv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
     irecv(src, tag, comm.tagged)
 end
+
+# TODO: allow for symbol lookup of communicators from global COMM

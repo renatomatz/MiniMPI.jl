@@ -1,26 +1,29 @@
 using Distributed
 
-abstract type AbstractComm{T, N<:Integer} end
+abstract type AbstractComm{T, N} end
 
-Base.size(::AbstractComm{T, N}) where {N} = N
-Base.eltype(::AbstractComm{T, N}) where {T} = T
+Base.size(::AbstractComm{T, N}) where {T, N} = N
+Base.eltype(::AbstractComm{T, N}) where {T, N} = T
+
+const CommDict = Dict{Symbol, AbstractComm}
 
 RemoteChannelVector{T} = Vector{RemoteChannel{Channel{T}}} where {T}
+ChannelVector{T} = Vector{Channel{T}} where {T}
 
-struct BaseComm{T, N<:Integer} <: AbstractComm{T, N}
+struct BaseComm{T, N} <: AbstractComm{T, N}
 
-    ich::RemoteChannelVector{T}
+    ich::ChannelVector{T}
     och::RemoteChannelVector{T}
     me::Int64
     p::Int64
 
-    function BaseComm{T, N}(p::Integer) where {T, N<:Integer}
-        ich = RemoteChannelVector{T}(undef, p)
+    function BaseComm{T, N}(p::Integer) where {T, N}
+        ich = ChannelVector{T}(undef, p)
         och = RemoteChannelVector{T}(undef, p)
         new(ich, och, myid(), p)
     end
 
-    function BaseComm{T, N}() where {T, N<:Integer}
+    function BaseComm{T, N}() where {T, N}
         BaseComm{T, N}(nprocs())
     end
 
@@ -88,7 +91,7 @@ struct GeneralComm{S, T, N} <: AbstractComm{T, N}
     me::Int64
     p::Int64
 
-    function GeneralComm{T, N}(p::Integer) where {T, N}
+    function GeneralComm{S, T, N}(p::Integer) where {S, T, N}
         comm = BaseComm{T, N}(p)
         tagged = TaggedComm{S, T, N}(p)
         collective = CollectiveComm{T}(p)
@@ -97,8 +100,8 @@ struct GeneralComm{S, T, N} <: AbstractComm{T, N}
         new(comm, tagged, collective, me, p)
     end
 
-    function GeneralComm{T, N}() where {T, N}
-        GeneralComm{T, N}(nprocs())
+    function GeneralComm{S, T, N}() where {S, T, N}
+        GeneralComm{S, T, N}(nprocs())
     end
 
 end

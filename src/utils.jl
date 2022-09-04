@@ -1,7 +1,15 @@
 using Distributed
 
+function dot_expr(first, second)
+    Expr(:., first, second)
+end
+
 function asgn_expr(name, val)
-    Expr(:(=), Symbol(name), val)
+    Expr(:(=), name, val)
+end
+
+function ref_expr(name, val)
+    Expr(:ref, name, val)
 end
 
 function remote_return(expr, p::Integer, mod::Module=Main)
@@ -17,6 +25,7 @@ function remote_asgn(name, val, p::Integer, mod::Module=Main)
 end
 
 function channel_lambda(name, ::Type{T}, N::Integer, mod::Module=Main) where {T}
+    # println(asgn_expr(name, Channel{T}(N)))
     ()->Core.eval(mod, asgn_expr(name, Channel{T}(N)))
 end
 

@@ -1,34 +1,45 @@
-function mpiexec(f::Function, comm::Dict{AbstractComm})
+function mpiexec(f::Function)
+
+    init_comm()
+
     p = n_procs()
     fut = Vector{Future}(undef, p)
     for i in 1:p
-        fut[i] = remotecall(f, i, comm)
+        fut[i] = remotecall(f, i)
     end
     fut
+
 end
 
-function make_name(comm::BaseComm{T, N}) where {T, N}
+function init_comm()
+
+    @everywhere begin
+        for (name, comm) in COMM
+            #TODO: implement group comms
+            MiniMPI.populate_channels(comm, MiniMPI.ref_expr(:COMM, QuoteNode(name)))
+        end
+    end
+
 end
 
-function populate_channels(comm::BaseComm{T, N}) where {T, N}
+function populate_channels(comm::BaseComm{T, N}, name) where {T, N}
     for i in 1:comm.p
-        # create a way of making names
-        name = make_name(comm)
-        comm.och[i] = assigned_remote_channel(name, i, T, N)
-        # This executes remotely but creates a channel locally
-        name = :($name[$i])
-        remote_exec(:(assigned_remote_channel(name, 1, $T, $N)), i)
+        #TODO: implement group comms
+        comm.och[i] = assigned_remote_channel(
+            ref_expr(dot_expr(name, QuoteNode(:ich)), comm.me),
+            i, T, N
+        )
     end
 end
 
-function populate_channels(comm::CollectiveComm)
-    populate_channels(comm.comm)
-    populate_channels(comm.vec_comm)
-    populate_channels(comm.barrier)
+function populate_channels(comm::CollectiveComm, name)
+    populate_channels(comm.comm, dot_expr(name, :comm))
+    populate_channels(comm.vec_comm, dot_expr(name, :vec_comm))
+    populate_channels(comm.barrier, dot_expr(name, :barrier))
 end
 
-function populate_channels(comm::GeneralComm)
-    populate_channels(comm.comm)
-    populate_channels(comm.tagged)
-    populate_channels(comm.collective)
+function populate_channels(comm::GeneralComm, name)
+    populate_channels(comm.comm, dot_expr(name, :comm))
+    populate_channels(comm.tagged, dot_expr(name, :tagged))
+    populate_channels(comm.collective, dot_expr(name, :collective))
 end
