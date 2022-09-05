@@ -31,6 +31,9 @@ struct BaseComm{T, N} <: AbstractComm{T, N}
     #       Would mostly be the same initialization but parameter (me)
     #       would not necessarily be myid(), but rather some id relative
     #       to the communication group.
+    #       One good way of implementing this is creating a named group struct
+    #       that contains information about your position in a group. Instances
+    #       of AbstractComm contain a reference to one of these.
 
 end
 

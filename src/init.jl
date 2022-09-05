@@ -1,15 +1,4 @@
-function mpiexec(f::Function)
-
-    init_comm()
-
-    p = n_procs()
-    fut = Vector{Future}(undef, p)
-    for i in 1:p
-        fut[i] = remotecall(f, i)
-    end
-    fut
-
-end
+using Distributed
 
 function init_comm()
 
