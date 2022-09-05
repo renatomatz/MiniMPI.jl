@@ -3,6 +3,7 @@ module MiniMPI
 include("utils.jl")
 include("comm.jl")
 include("init.jl")
+include("pointtopoint.jl")
 
 export
 
@@ -20,5 +21,9 @@ export
 
     # Initializers
     mpiexec
+
+    # Point to point communication
+    send
+    recv
 
 end
