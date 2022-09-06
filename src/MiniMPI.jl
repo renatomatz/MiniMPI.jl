@@ -20,7 +20,7 @@ export
     RemoteChannelVector,
 
     # Initializers
-    mpiexec,
+    init_comm,
 
     # Point to point communication
     send,

@@ -5,24 +5,31 @@ using MiniMPI
 addprocs(1)
 
 @everywhere begin
-    using Pkg
-    Pkg.activate(".")
+    using Pkg; Pkg.activate(".")
     using MiniMPI
 end
 
 @everywhere begin
-    COMM = CommDict()
-    COMM[:unbuf] = BaseComm()
-    COMM[:buf] = BaseComm(1)
+    COMM_DICT = CommDict()
+    COMM_DICT[:unbuf] = BaseComm()
+    COMM_DICT[:ret] = BaseComm(1)
 end
-
-MiniMPI.init_comm()
 
 @everywhere begin
-    if COMM[:unbuf].me == 1
-        send(42, 2, COMM[:unbuf])
+
+    init_comm(:COMM_DICT)
+    comm = COMM_DICT[:unbuf]
+    ret_comm = COMM_DICT[:ret]
+
+    if comm.me == 1
+        send(42, 2, comm)
     else
-        ret = recv(1, COMM[:unbuf])
-        println(ret)
+        ret = recv(1, comm)
+        send(ret, 1, ret_comm)
     end
+
 end
+
+ret = recv(2, ret_comm)
+println(ret)
+@test ret == 42

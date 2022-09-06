@@ -6,17 +6,11 @@ using MiniMPI
 
     @testset "One Process" begin
 
-        @everywhere begin
-            COMM = CommDict()
-            COMM[:base] = BaseComm(1)
-        end
+        @everywhere comm = BaseComm(1)
+        @everywhere init_comm(:comm)
 
-        MiniMPI.init_comm()
-
-        ch = COMM[:base]
-
-        send(1, 1, COMM[:base])
-        ret = recv(1, COMM[:base])
+        send(1, 1, comm)
+        ret = recv(1, comm)
         @test ret == 1
 
     end
@@ -31,14 +25,8 @@ using MiniMPI
             using MiniMPI
         end
 
-        @everywhere begin
-            COMM = CommDict()
-            COMM[:base] = BaseComm(1)
-        end
-
-        MiniMPI.init_comm()
-
-        @everywhere ch = COMM[:base]
+        @everywhere comm = BaseComm(1)
+        @everywhere init_comm(:comm)
 
         all_procs = ones(Int64, nprocs())
         if nprocs() > 1
@@ -47,13 +35,13 @@ using MiniMPI
 
         for i in all_procs
             for j in all_procs
-                MiniMPI.remote_return(:(send($i, $j, COMM[:base])), i)
+                MiniMPI.remote_return(:(send($i, $j, comm)), i)
             end
         end
 
         for i in all_procs
             for j in all_procs
-                ret = MiniMPI.remote_return(:(recv($j, COMM[:base])), i)
+                ret = MiniMPI.remote_return(:(recv($j, comm)), i)
                 @test ret == j
             end
         end

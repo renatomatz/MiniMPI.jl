@@ -1,14 +1,19 @@
 using Distributed
 
-function init_comm()
+function init_comm(name)
+    init_comm_(Core.eval(Main, name), name)
+end
 
-    @everywhere begin
-        for (name, comm) in COMM
-            #TODO: implement group comms
-            MiniMPI.populate_channels(comm, MiniMPI.ref_expr(:COMM, QuoteNode(name)))
-        end
+function init_comm_(comm_dict::CommDict, name)
+    for (key, comm) in comm_dict
+        #TODO: implement group comms
+        init_comm_(comm, MiniMPI.ref_expr(name, QuoteNode(key)))
     end
+end
 
+function init_comm_(comm::AbstractComm, name)
+    #TODO: implement group comms
+    MiniMPI.populate_channels(comm, name)
 end
 
 function populate_channels(comm::BaseComm{T, N}, name) where {T, N}

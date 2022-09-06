@@ -2,21 +2,15 @@ using Test
 using Distributed
 using MiniMPI
 
-@testset "sdf" begin
+@testset "Simple Initialization" begin
 
     @testset "Single Process" begin
 
-        @everywhere begin
-            COMM = CommDict()
-            COMM[:base] = BaseComm(1)
-        end
+        @everywhere comm = BaseComm(1)
+        @everywhere init_comm(:comm)
 
-        MiniMPI.init_comm()
-
-        ch = COMM[:base]
-
-        put!(ch.och[1], 1)
-        ret = take!(ch.ich[1])
+        put!(comm.och[1], 1)
+        ret = take!(comm.ich[1])
         @test ret == 1
 
     end
@@ -31,14 +25,8 @@ using MiniMPI
             using MiniMPI
         end
 
-        @everywhere begin
-            COMM = CommDict()
-            COMM[:base] = BaseComm(1)
-        end
-
-        MiniMPI.init_comm()
-
-        @everywhere ch = COMM[:base]
+        @everywhere comm = BaseComm(1)
+        @everywhere init_comm(:comm)
 
         # TODO: Create testing utils for expressions like this
         all_procs = ones(Int64, nprocs())
@@ -48,13 +36,13 @@ using MiniMPI
 
         for i in all_procs
             for j in all_procs
-                MiniMPI.remote_return(:(put!(ch.och[$j], $i)), i)
+                MiniMPI.remote_return(:(put!(comm.och[$j], $i)), i)
             end
         end
 
         for i in all_procs
             for j in all_procs
-                ret = MiniMPI.remote_return(:(take!(ch.ich[$j])), i)
+                ret = MiniMPI.remote_return(:(take!(comm.ich[$j])), i)
                 @test ret == j
             end
         end
