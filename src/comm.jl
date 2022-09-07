@@ -85,7 +85,7 @@ struct CollectiveComm{T} <: AbstractComm{T, 0}
         mux = Base.ReentrantLock()
         me = myid()
         p = p
-        new(comm, vec_comm, barrier, mux)
+        new(comm, vec_comm, barrier, mux, me, p)
     end
 
     function CollectiveComm{T}() where {T}

@@ -4,6 +4,7 @@ include("utils.jl")
 include("comm.jl")
 include("init.jl")
 include("pointtopoint.jl")
+include("collective.jl")
 
 export
 
@@ -24,6 +25,10 @@ export
 
     # Point to point communication
     send,
-    recv
+    recv,
+
+    # Collective operations
+    barrier,
+    bcast
 
 end

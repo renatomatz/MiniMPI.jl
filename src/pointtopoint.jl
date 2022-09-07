@@ -2,20 +2,32 @@ function send(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
     put!(comm.och[dest], elem)
 end
 
-function recv(src::Integer, comm::BaseComm)
-    take!(comm.ich[src])
+function send(elem::T, dest::Integer, comm::TaggedComm{S, T}) where {S, T}
+    send(elem, dest, nothing, comm)
 end
 
-function isend(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
-    @async send(elem, dest, comm)
-end
-
-function irecv(src::Integer, comm::BaseComm)
-    @async recv(comm, src)
+function send(elem::T, dest::Integer, comm::GeneralComm{T}) where {T}
+    send(elem, dest, comm.comm)
 end
 
 function send(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
     send((tag, elem), dest, comm.comm)
+end
+
+function send(elem::T, dest::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    send(elem, dest, tag, comm.tagged)
+end
+
+function recv(src::Integer, comm::BaseComm)
+    take!(comm.ich[src])
+end
+
+function recv(src::Integer, comm::GeneralComm)
+    recv(src, comm.comm)
+end
+
+function recv(src::Integer, comm::TaggedComm{S, T}) where {S, T}
+    recv(src, nothing, comm)
 end
 
 function recv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
@@ -36,48 +48,36 @@ function recv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
     elem
 end
 
-function send(elem::T, dest::Integer, comm::TaggedComm{S, T}) where {S, T}
-    send(elem, dest, nothing, comm)
+function recv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
+    recv(src, tag, comm.tagged)
 end
 
-function recv(src::Integer, comm::TaggedComm{S, T}) where {S, T}
-    recv(src, nothing, comm)
-end
-
-function isend(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
-    @async send(elem, dest, tag, comm)
-end
-
-function irecv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
-    @async recv(src, tag, comm)
-end
-
-function send(elem::T, dest::Integer, comm::GeneralComm{T}) where {T}
-    send(elem, dest, comm.comm)
-end
-
-function recv(src::Integer, comm::GeneralComm)
-    recv(src, comm.comm)
+function isend(elem::T, dest::Integer, comm::BaseComm{T}) where {T}
+    @async send(elem, dest, comm)
 end
 
 function isend(elem::T, dest::Integer, comm::GeneralComm{T}) where {T}
     isend(src, dest, comm.comm)
 end
 
-function irecv(src::Integer, comm::GeneralComm)
-    irecv(src, comm.comm)
-end
-
-function send(elem::T, dest::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
-    send(elem, dest, tag, comm.tagged)
-end
-
-function recv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
-    recv(src, tag, comm.tagged)
+function isend(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
+    @async send(elem, dest, tag, comm)
 end
 
 function isend(elem::T, dest::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}
     isend(elem, dest, tag, comm.tagged)
+end
+
+function irecv(src::Integer, comm::BaseComm)
+    @async recv(comm, src)
+end
+
+function irecv(src::Integer, comm::GeneralComm)
+    irecv(src, comm.comm)
+end
+
+function irecv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
+    @async recv(src, tag, comm)
 end
 
 function irecv(src::Integer, tag::S, comm::GeneralComm{S, T}) where {S, T}

@@ -1,17 +1,16 @@
 # TODO: Add support for GeneralComm
 
-unlock(comm::CollectiveComm) = lock(comm.mux)
-lock(comm::CollectiveComm) = unlock(comm.mux)
+lock(comm::CollectiveComm) = Base.lock(comm.mux)
+unlock(comm::CollectiveComm) = Base.unlock(comm.mux)
 
 function barrier(comm::CollectiveComm)
     lock(comm)
     for i in 1:comm.p
-        send(comm.barrier, i, true)
+        send(true, i, comm.barrier)
     end
     for i in reverse(1:comm.p)
-        recv(comm.barrier, i)
+        recv(i, comm.barrier)
     end
-    send(true, me, barrier)
     unlock(comm)
 end
 
@@ -33,14 +32,14 @@ end
 
 function bcast(src::Integer, comm::CollectiveComm)
     lock(comm)
-    comm.me == src || "source image must specify an element"
+    comm.me == src || error("source image must specify an element")
     ret = bcast_recv(src, comm)
     unlock(comm)
     ret
 end
 
 function bcast_recv(src::Integer, comm::CollectiveComm)
-    recv(src, comm)
+    recv(src, comm.comm)
 end
 
 function reduce(elem::T, dest::Integer, op::Function, comm::CollectiveComm{T}) where {T}
