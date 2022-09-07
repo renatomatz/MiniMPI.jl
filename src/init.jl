@@ -7,7 +7,7 @@ end
 function init_comm_(comm_dict::CommDict, name)
     for (key, comm) in comm_dict
         #TODO: implement group comms
-        init_comm_(comm, MiniMPI.ref_expr(name, QuoteNode(key)))
+        init_comm_(comm, MiniMPI.ref_expr(name, key))
     end
 end
 
@@ -20,10 +20,14 @@ function populate_channels(comm::BaseComm{T, N}, name) where {T, N}
     for i in 1:comm.p
         #TODO: implement group comms
         comm.och[i] = assigned_remote_channel(
-            ref_expr(dot_expr(name, QuoteNode(:ich)), comm.me),
+            ref_expr(dot_expr(name, :ich), comm.me),
             i, T, N
         )
     end
+end
+
+function populate_channels(comm::TaggedComm, name)
+    populate_channels(comm.comm, dot_expr(name, :comm))
 end
 
 function populate_channels(comm::CollectiveComm, name)

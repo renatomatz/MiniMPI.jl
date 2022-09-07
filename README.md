@@ -5,4 +5,4 @@
 [![Build Status](https://github.com/renatomatz/MiniMPI.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/renatomatz/MiniMPI.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/renatomatz/MiniMPI.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/renatomatz/MiniMPI.jl)
 
-MiniMPI.jl implements basic features of the Message Passing Interface (MPI) implemented with the Julia standard library, with Distributed.jl as its backbone. This is not meant to replace MPI.jl in any way, but rather serve as a natively implemented tool for simple workflows in mostly sequential Julia code.
+MiniMPI.jl implements basic features of the Message Passing Interface (MPI) implemented with the Julia standard library, with Distributed.jl as its backbone. This is not meant to replace MPI.jl in any way, but rather serve as a natively implemented tool for simple workflows in mostly sequential Julia code (and a interesting way of exploring Julia). 

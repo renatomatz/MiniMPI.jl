@@ -1,7 +1,7 @@
 using Distributed
 
 function dot_expr(first, second)
-    Expr(:., first, second)
+    Expr(:., first, QuoteNode(second))
 end
 
 function asgn_expr(name, val)
@@ -9,7 +9,7 @@ function asgn_expr(name, val)
 end
 
 function ref_expr(name, val)
-    Expr(:ref, name, val)
+    Expr(:ref, name, QuoteNode(val))
 end
 
 function remote_return(expr, p::Integer, mod::Module=Main)

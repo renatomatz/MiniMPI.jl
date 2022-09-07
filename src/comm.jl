@@ -42,19 +42,31 @@ end
 (BaseComm)(N::Integer) = BaseComm(Any, N)
 (BaseComm)() = BaseComm(Any, 0)
 
-const UnbufferedComm{T} = BaseComm{T, 0} where {T}
+OptTuple{S, T} = Tuple{Union{S, Nothing}, T}
 
-(UnbufferedComm)(::Type{T}) where {T} = BaseComm(T)
-(UnbufferedComm)() = UnbufferedComm(Any)
+struct TaggedComm{S, T, N} <: AbstractComm{OptTuple{S, T}, N}
 
-const TaggedComm{S, T, N} = BaseComm{Tuple{S, T}, N} where {T, N}
+    comm::BaseComm{OptTuple{S, T}, N} where {S, T, N}
+    me::Int64
+    p::Int64
+
+    function TaggedComm{S, T, N}(p::Integer) where {S, T, N}
+        comm = BaseComm{OptTuple{S, T}, N}(p)
+        new(comm, myid(), p)
+    end
+
+    function TaggedComm{S, T, N}() where {S, T, N}
+        TaggedComm{S, T, N}(nprocs())
+    end
+
+end
 
 (TaggedComm)(::Type{S}, ::Type{T}, N::Integer) where {S, T} = TaggedComm{S, T, N}()
-(TaggedComm)(::Type{S}, ::Type{T}) where {S, T} = TaggedComm(S, T, 0)
+(TaggedComm)(::Type{S}, ::Type{T}) where {S, T} = TaggedComm(S, T, 1)
 (TaggedComm)(::Type{T}, N::Integer) where {T} = TaggedComm(Int64, T, N)
-(TaggedComm)(::Type{T}) where {T} = TaggedComm(Int64, T, 0)
+(TaggedComm)(::Type{T}) where {T} = TaggedComm(Int64, T, 1)
 (TaggedComm)(N::Integer) = TaggedComm(Int64, Any, N)
-(TaggedComm)() = TaggedComm(Any, 0)
+(TaggedComm)() = TaggedComm(Any, 1)
 
 struct CollectiveComm{T} <: AbstractComm{T, 0}
 

@@ -15,23 +15,33 @@ function irecv(src::Integer, comm::BaseComm)
 end
 
 function send(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
-    send((tag, elem), dest, comm)
+    send((tag, elem), dest, comm.comm)
 end
 
 function recv(src::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}
-    backlog = Vector{Tuple{S, T}}()
+    backlog = Vector{OptTuple{S, T}}()
+    elem = nothing
     while true
-        recv_tag, elem = recv(src, comm)
+        recv_tag, elem = recv(src, comm.comm)
         recv_tag == tag && break
         push!(backlog, (recv_tag, elem))
     end
     # TODO: This approach can cause the receiving image to get too much
     #       data, which imbalances memory usage between images.
-    for elem in backlog
+    for belem in backlog
         # As tagged receives don't care for order, this approach won't cause
         # bugs from possibly miss-ordering channel elements.
-        @async put!(comm.ich[src], elem)
+        @async put!(comm.ich[src], belem)
     end
+    elem
+end
+
+function send(elem::T, dest::Integer, comm::TaggedComm{S, T}) where {S, T}
+    send(elem, dest, nothing, comm)
+end
+
+function recv(src::Integer, comm::TaggedComm{S, T}) where {S, T}
+    recv(src, nothing, comm)
 end
 
 function isend(elem::T, dest::Integer, tag::S, comm::TaggedComm{S, T}) where {S, T}

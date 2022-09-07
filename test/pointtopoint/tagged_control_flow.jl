@@ -11,7 +11,7 @@ end
 
 @everywhere begin
     COMM_DICT = CommDict()
-    COMM_DICT[:unbuf] = BaseComm()
+    COMM_DICT[:unbuf] = TaggedComm(Int64, Any, 1)
     COMM_DICT[:ret] = BaseComm(1)
 end
 
@@ -19,15 +19,15 @@ end
 
 @everywhere begin
 
-    comm = COMM_DICT[:unbuf]
-    ret_comm = COMM_DICT[:ret]
+   comm = COMM_DICT[:unbuf]
+   ret_comm = COMM_DICT[:ret]
 
-    if comm.me == 1
-        send(42, 2, comm)
-    else
-        ret = recv(1, comm)
-        send(ret, 1, ret_comm)
-    end
+   if comm.me == 1
+       send(42, 2, 2, comm)
+   else
+       ret = recv(1, 2, comm)
+       send(ret, 1, ret_comm)
+   end
 
 end
 
