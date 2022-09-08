@@ -30,4 +30,5 @@ end
 
 for i in 1:comm.p
     res = recv(i, res_comm)
+    println(res)
 end

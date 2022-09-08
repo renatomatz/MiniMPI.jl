@@ -72,8 +72,10 @@ struct CollectiveComm{T} <: AbstractComm{T, 0}
 
     comm::BaseComm{T, 0}
     vec_comm::BaseComm{Vector{T}, 0}
+    comm_lock::Base.AbstractLock
+
     barrier::BaseComm{Bool, 1}
-    mux::Base.AbstractLock
+    bar_lock::Base.AbstractLock
 
     me::Int64
     p::Int64
@@ -81,11 +83,12 @@ struct CollectiveComm{T} <: AbstractComm{T, 0}
     function CollectiveComm{T}(p::Integer) where {T}
         comm = BaseComm{T, 0}(p)
         vec_comm = BaseComm{Vector{T}, 0}(p)
+        comm_lock = Base.ReentrantLock()
         barrier = BaseComm{Bool, 1}(p)
-        mux = Base.ReentrantLock()
+        bar_lock = Base.ReentrantLock()
         me = myid()
         p = p
-        new(comm, vec_comm, barrier, mux, me, p)
+        new(comm, vec_comm, comm_lock, barrier, bar_lock, me, p)
     end
 
     function CollectiveComm{T}() where {T}
