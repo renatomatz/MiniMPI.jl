@@ -15,7 +15,7 @@ end
 
 @everywhere begin
     elem = myid()
-    res = reduce(elem, Base.:+, 1, comm)
+    res = reduc(elem, Base.:+, 1, comm)
 end
 
 println(res)

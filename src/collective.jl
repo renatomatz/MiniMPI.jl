@@ -40,30 +40,41 @@ function bcast_recv(src::Integer, comm::CollectiveComm)
     recv(src, comm.comm)
 end
 
-function reduce(elem::T, op::Function, dest::Integer, comm::CollectiveComm{T}) where {T}
+function reduc(elem::T, op::Function, dest::Integer, comm::CollectiveComm{T}) where {T}
 
     lock(comm.comm_lock)
+
     p = comm.p
     me = comm.me
 
-    L = 1
+    mid, gap = 1, 2
     this = elem
-    while L < p
-        if (me+L <= p) & (mod(me-1, 2*L) == 0)
-            other = recv(me+L, comm.comm)
+    while mid < p
+        if (me+mid <= p) & (mod(me-1, gap) == 0)
+            # First condition: process that would send data is valid
+            # Second condition: this process is in the start of a gap
+            other = recv(me+mid, comm.comm)
             this = op(this, other)
-        elseif mod(me-L-1, 2*L) == 0
-            send(this, me-L, comm.comm)
+        elseif mod(me-mid-1, gap) == 0
+            # Condition: process that would receive data is in the start of
+            #            a gap.
+            # If process gets here, it is implied it is valid.
+            send(this, me-mid, comm.comm)
         end
-        L *= 2
+        mid, gap = gap, gap*2
         barrier(comm)
     end
 
-    if me == 1
-        send(this, dest, comm.comm)
-    end
-    if me == dest
-        this = recv(1, comm.comm)
+    if dest != 1
+        # If dest is 1, no need to send result to itself
+        if me == 1
+            # Results are condensed at 1, so it must be sent to the
+            # destination.
+            send(this, dest, comm.comm)
+        end
+        if me == dest
+            this = recv(1, comm.comm)
+        end
     end
 
     unlock(comm.comm_lock)

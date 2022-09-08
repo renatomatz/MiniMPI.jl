@@ -29,6 +29,7 @@ export
 
     # Collective operations
     barrier,
-    bcast
+    bcast,
+    reduc
 
 end
