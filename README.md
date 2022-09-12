@@ -1,6 +1,6 @@
-<p align="center">
-<img width="400px" src="https://github.com/renatomatz/MiniMPI.jl/tree/main/images/logo.png">
-</p>
+<div style="text-align: center;">
+![logo](images/logo.png)
+</div>
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/dev)
