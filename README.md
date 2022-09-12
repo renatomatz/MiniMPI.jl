@@ -1,5 +1,5 @@
 <p align="center">
-<img width="400px" src="https://github.com/renatomatz/MiniMPI.jl/tree/main/images/logo.png">
+<img width="400px" src="https://github.com/renatomatz/MiniMPI.jl/images/logo.png">
 </p>
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/stable)
