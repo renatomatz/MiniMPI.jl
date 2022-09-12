@@ -1,5 +1,5 @@
 <div style="text-align: center;">
-![logo](images/logo.png)
+![logo](/images/logo.png)
 </div>
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://renatomatz.github.io/MiniMPI.jl/stable)
