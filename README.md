@@ -37,9 +37,9 @@ ret == 42
 
 The three steps to running this and most other programs in MiniMPI, after the processed are added and the library is imported is as follows:
 
-    1. Create communicator objects.
-    2. Initialize communicators.
-    3. Execute distributed script.
+1. Create communicator objects.
+2. Initialize communicators.
+3. Execute distributed script.
 
 Note that each of these steps must be performed in **separate** `@everywhere` blocks due to its intrinsic syncronization. That is, for the program to be executed, the communicators must be inizialized in all processes, and for the communicators to be initialized, all processors must have the communicators defined on the global scope. While this seems verbose for a simple example as above, thise three steps are the same regardless of the number of communicators and size of the program.
 
