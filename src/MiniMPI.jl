@@ -26,6 +26,8 @@ export
     # Point to point communication
     send,
     recv,
+    isend,
+    irecv,
 
     # Collective operations
     barrier,
