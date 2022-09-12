@@ -5,6 +5,8 @@
 [![Build Status](https://github.com/renatomatz/MiniMPI.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/renatomatz/MiniMPI.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/renatomatz/MiniMPI.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/renatomatz/MiniMPI.jl)
 
+![logo](images/logo.png)
+
 MiniMPI.jl implements basic features of the Message Passing Interface (MPI) implemented with the Julia standard library, with Distributed.jl as its backbone. Keeping things native to Julia means that using MiniMPI does not require users to have an implementation of the MPI standard installed, nor any additional libraries beyond what is included with Julia. This library is not meant to replace MPI.jl in any way, but rather serve as a natively implemented tool for simple workflows in mostly sequential Julia code.
 
 As this is not a wrapper of the MPI library in C, much of the syntax and names from the MPI standard are changed to suit the structure of Julia code. As a simple example, both tagged and untagged communication is possible through `BaseComm` and `TaggedComm` objects, respectfully, while `GeneralComm` allows for both. Additionally, users can specify the type and buffer size of each communicator. This possibility to specialize communication channels allows for more efficient communications, and conforms to the paradigm exposed by the Distributed library. Keeping the implementaion native to Julia also means that the usual structure of an MPI program needs to be adapted to use available structures, as is shown in the examples below.
