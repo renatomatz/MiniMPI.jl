@@ -1,132 +1,113 @@
 using Distributed
 
-abstract type AbstractComm{T, N} end
+# TODO: reconsider N as a necessary template parameter
+abstract type AbstractComm{T} end
 
-Base.size(::AbstractComm{T, N}) where {T, N} = N
-Base.eltype(::AbstractComm{T, N}) where {T, N} = T
+Base.eltype(::AbstractComm{T}) where {T} = T
+
+nprocs(comm::AbstractComm) = nprocs(comm.group)
+myid(comm::AbstractComm) = myid(comm.group)
+ltog(comm::AbstractComm, li::Int64) = ltof(comm.group, li)
 
 const CommDict = Dict{Symbol, AbstractComm}
 
 RemoteChannelVector{T} = Vector{RemoteChannel{Channel{T}}} where {T}
 ChannelVector{T} = Vector{Channel{T}} where {T}
 
-struct BaseComm{T, N} <: AbstractComm{T, N}
+struct BaseComm{T} <: AbstractComm{T}
 
     ich::ChannelVector{T}
     och::RemoteChannelVector{T}
-    me::Int64
-    p::Int64
+    buf_size::Int64
+    group::CommGroup
 
-    function BaseComm{T, N}(p::Integer) where {T, N}
-        ich = ChannelVector{T}(undef, p)
-        och = RemoteChannelVector{T}(undef, p)
-        new(ich, och, myid(), p)
+    function BaseComm{T}(buf_size::Int64, group::CommGroup) where {T}
+        ich = ChannelVector{T}(undef, nprocs(group))
+        och = RemoteChannelVector{T}(undef, nprocs(group))
+        new(ich, och, buf_size, group)
     end
-
-    function BaseComm{T, N}() where {T, N}
-        BaseComm{T, N}(nprocs())
-    end
-
-    # TODO: Create method for custom communication groups.
-    #       Would mostly be the same initialization but parameter (me)
-    #       would not necessarily be myid(), but rather some id relative
-    #       to the communication group.
-    #       One good way of implementing this is creating a named group struct
-    #       that contains information about your position in a group. Instances
-    #       of AbstractComm contain a reference to one of these.
 
 end
 
-(BaseComm)(::Type{T}, N::Integer) where {T} = BaseComm{T, N}()
+# TODO: Add more group initializers to BaseComm and other AbstractComm
+# subtypes.
+
+(BaseComm)(::Type{T}, buf_size::Integer) where {T} = BaseComm{T}(sz, CommGroup())
 (BaseComm)(::Type{T}) where {T} = BaseComm(T, 0)
-(BaseComm)(N::Integer) = BaseComm(Any, N)
+(BaseComm)(buf_size::Integer) = BaseComm(Any, buf_size)
 (BaseComm)() = BaseComm(Any, 0)
 
-OptTuple{S, T} = Tuple{Union{S, Nothing}, T}
+Base.size(comm::BaseComm) = comm.buf_size
 
-struct TaggedComm{S, T, N} <: AbstractComm{OptTuple{S, T}, N}
+OptTuple{S, T} = Tuple{Union{Nothing}, T}
 
-    comm::BaseComm{OptTuple{S, T}, N} where {S, T, N}
-    me::Int64
-    p::Int64
+struct TaggedComm{S, T} <: AbstractComm{OptTuple{S, T}}
 
-    function TaggedComm{S, T, N}(p::Integer) where {S, T, N}
-        comm = BaseComm{OptTuple{S, T}, N}(p)
-        new(comm, myid(), p)
-    end
+    comm::BaseComm{OptTuple{S, T}} where {S, T}
+    group::CommGroup
 
-    function TaggedComm{S, T, N}() where {S, T, N}
-        TaggedComm{S, T, N}(nprocs())
+    function TaggedComm{S, T}(buf_size::Int64, group::CommGroup) where {S, T}
+        comm = BaseComm{OptTuple{S, T}}(buf_size, group)
+        new(comm, group)
     end
 
 end
 
-(TaggedComm)(::Type{S}, ::Type{T}, N::Integer) where {S, T} = TaggedComm{S, T, N}()
+(TaggedComm)(::Type{S}, ::Type{T}, buf_size::Integer) where {S, T} = TaggedComm{S, T}(buf_size, CommGroup())
 (TaggedComm)(::Type{S}, ::Type{T}) where {S, T} = TaggedComm(S, T, 1)
-(TaggedComm)(::Type{T}, N::Integer) where {T} = TaggedComm(Int64, T, N)
-(TaggedComm)(::Type{T}) where {T} = TaggedComm(Int64, T, 1)
-(TaggedComm)(N::Integer) = TaggedComm(Int64, Any, N)
+(TaggedComm)(::Type{T}, buf_size::Integer) where {T} = TaggedComm(Int64, T, buf_size)
+(TaggedComm)(::Type{T}) where {T} = TaggedComm(T, 1)
+(TaggedComm)(buf_size::Integer) = TaggedComm(Int64, Any, buf_size)
 (TaggedComm)() = TaggedComm(Any, 1)
 
-struct CollectiveComm{T} <: AbstractComm{T, 0}
+Base.size(comm::TaggedComm) = Base.size(comm.comm)
 
-    comm::BaseComm{T, 0}
-    vec_comm::BaseComm{Vector{T}, 0}
+struct CollectiveComm{T} <: AbstractComm{T}
+
+    comm::BaseComm{T}
+    vec_comm::BaseComm{Vector{T}}
     comm_lock::Base.AbstractLock
 
-    barrier::BaseComm{Bool, 1}
+    barrier::BaseComm{Bool}
     bar_lock::Base.AbstractLock
 
-    me::Int64
-    p::Int64
+    group::CommGroup
 
-    function CollectiveComm{T}(p::Integer) where {T}
-        comm = BaseComm{T, 0}(p)
-        vec_comm = BaseComm{Vector{T}, 0}(p)
+    function CollectiveComm{T}(group::CommGroup) where {T}
+        comm = BaseComm{T}(0, group)
+        vec_comm = BaseComm{Vector{T}}(0, group)
         comm_lock = Base.ReentrantLock()
-        barrier = BaseComm{Bool, 1}(p)
+        barrier = BaseComm{Bool}(1, group)
         bar_lock = Base.ReentrantLock()
-        me = myid()
-        p = p
-        new(comm, vec_comm, comm_lock, barrier, bar_lock, me, p)
-    end
-
-    function CollectiveComm{T}() where {T}
-        CollectiveComm{T}(nprocs())
+        new(comm, vec_comm, comm_lock, barrier, bar_lock, group)
     end
 
 end
 
-(CollectiveComm)(::Type{T}) where {T} = CollectiveComm{T}()
+(CollectiveComm)(::Type{T}) where {T} = CollectiveComm{T}(CommGroup())
 (CollectiveComm)() = CollectiveComm(Any)
 
-struct GeneralComm{S, T, N} <: AbstractComm{T, N}
+struct GeneralComm{S, T} <: AbstractComm{T}
 
-    comm::BaseComm{T, N}
-    tagged::TaggedComm{S, T, N}
+    comm::BaseComm{T}
+    tagged::TaggedComm{S, T}
     collective::CollectiveComm{T}
+    group::CommGroup
 
-    me::Int64
-    p::Int64
-
-    function GeneralComm{S, T, N}(p::Integer) where {S, T, N}
-        comm = BaseComm{T, N}(p)
-        tagged = TaggedComm{S, T, N}(p)
-        collective = CollectiveComm{T}(p)
-        me = myid()
-        p = p
-        new(comm, tagged, collective, me, p)
-    end
-
-    function GeneralComm{S, T, N}() where {S, T, N}
-        GeneralComm{S, T, N}(nprocs())
+    function GeneralComm{S, T}(buf_size::Int64, group::CommGroup) where {S, T}
+        comm = BaseComm{T}(buf_size, group)
+        tagged = TaggedComm{S, T}(buf_size, group)
+        collective = CollectiveComm{T}(group)
+        new(comm, tagged, collective, group)
     end
 
 end
 
-(GeneralComm)(::Type{S}, ::Type{T}, N::Integer) where {S, T} = GeneralComm{S, T, N}()
+(GeneralComm)(::Type{S}, ::Type{T}, buf_size::Integer) where {S, T} = GeneralComm{S, T}(buf_size, CommGroup())
 (GeneralComm)(::Type{S}, ::Type{T}) where {S, T} = GeneralComm(S, T, 0)
-(GeneralComm)(::Type{T}, N::Integer) where {T} = GeneralComm(Int64, T, N)
+(GeneralComm)(::Type{T}, buf_size::Integer) where {T} = GeneralComm(Int64, T)
 (GeneralComm)(::Type{T}) where {T} = GeneralComm(Int64, T, 0)
-(GeneralComm)(N::Integer) = GeneralComm(Int64, Any, N)
+(GeneralComm)(buf_size::Integer) = GeneralComm(Int64, Any, buf_size)
 (GeneralComm)() = GeneralComm(Any, 0)
+
+Base.size(comm::GeneralComm) = Base.size(comm.comm)
