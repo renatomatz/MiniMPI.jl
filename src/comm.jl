@@ -1,6 +1,5 @@
 using Distributed
 
-# TODO: reconsider N as a necessary template parameter
 abstract type AbstractComm{T} end
 
 Base.eltype(::AbstractComm{T}) where {T} = T
@@ -21,7 +20,7 @@ struct BaseComm{T} <: AbstractComm{T}
     buf_size::Int64
     group::CommGroup
 
-    function BaseComm{T}(buf_size::Int64, group::CommGroup) where {T}
+    function BaseComm{T}(buf_size::Integer, group::CommGroup) where {T}
         ich = ChannelVector{T}(undef, nprocs(group))
         och = RemoteChannelVector{T}(undef, nprocs(group))
         new(ich, och, buf_size, group)
@@ -29,36 +28,32 @@ struct BaseComm{T} <: AbstractComm{T}
 
 end
 
-# TODO: Add more group initializers to BaseComm and other AbstractComm
-# subtypes.
-
-(BaseComm)(::Type{T}, buf_size::Integer) where {T} = BaseComm{T}(sz, CommGroup())
-(BaseComm)(::Type{T}) where {T} = BaseComm(T, 0)
-(BaseComm)(buf_size::Integer) = BaseComm(Any, buf_size)
-(BaseComm)() = BaseComm(Any, 0)
+BaseComm(::Type{T}=Any,
+         buf_size::Integer=0,
+         group::CommGroup=CommGroup()) where {T}
+   = BaseComm{T}(buf_size, group)
 
 Base.size(comm::BaseComm) = comm.buf_size
 
-OptTuple{S, T} = Tuple{Union{Nothing}, T}
+OptTuple{S, T} = Tuple{Union{Nothing, S}, T}
 
 struct TaggedComm{S, T} <: AbstractComm{OptTuple{S, T}}
 
-    comm::BaseComm{OptTuple{S, T}} where {S, T}
+    comm::BaseComm{OptTuple{S, T}}
     group::CommGroup
 
-    function TaggedComm{S, T}(buf_size::Int64, group::CommGroup) where {S, T}
+    function TaggedComm{S, T}(buf_size::Integer, group::CommGroup) where {S, T}
         comm = BaseComm{OptTuple{S, T}}(buf_size, group)
         new(comm, group)
     end
 
 end
 
-(TaggedComm)(::Type{S}, ::Type{T}, buf_size::Integer) where {S, T} = TaggedComm{S, T}(buf_size, CommGroup())
-(TaggedComm)(::Type{S}, ::Type{T}) where {S, T} = TaggedComm(S, T, 1)
-(TaggedComm)(::Type{T}, buf_size::Integer) where {T} = TaggedComm(Int64, T, buf_size)
-(TaggedComm)(::Type{T}) where {T} = TaggedComm(T, 1)
-(TaggedComm)(buf_size::Integer) = TaggedComm(Int64, Any, buf_size)
-(TaggedComm)() = TaggedComm(Any, 1)
+TaggedComm(::Type{S}=Int64,
+           ::Type{T}=Any,
+           buf_size::Integer=1,
+           group::CommGroup=CommGroup()) where {S, T}
+   = TaggedComm{S, T}(buf_size, group)
 
 Base.size(comm::TaggedComm) = Base.size(comm.comm)
 
@@ -84,8 +79,9 @@ struct CollectiveComm{T} <: AbstractComm{T}
 
 end
 
-(CollectiveComm)(::Type{T}) where {T} = CollectiveComm{T}(CommGroup())
-(CollectiveComm)() = CollectiveComm(Any)
+CollectiveComm(::Type{T}=Any,
+               group::CommGroup=CommGroup()) where {T}
+    = CollectiveComm{T}(group)
 
 struct GeneralComm{S, T} <: AbstractComm{T}
 
@@ -94,7 +90,7 @@ struct GeneralComm{S, T} <: AbstractComm{T}
     collective::CollectiveComm{T}
     group::CommGroup
 
-    function GeneralComm{S, T}(buf_size::Int64, group::CommGroup) where {S, T}
+    function GeneralComm{S, T}(buf_size::Integer, group::CommGroup) where {S, T}
         comm = BaseComm{T}(buf_size, group)
         tagged = TaggedComm{S, T}(buf_size, group)
         collective = CollectiveComm{T}(group)
@@ -103,11 +99,10 @@ struct GeneralComm{S, T} <: AbstractComm{T}
 
 end
 
-(GeneralComm)(::Type{S}, ::Type{T}, buf_size::Integer) where {S, T} = GeneralComm{S, T}(buf_size, CommGroup())
-(GeneralComm)(::Type{S}, ::Type{T}) where {S, T} = GeneralComm(S, T, 0)
-(GeneralComm)(::Type{T}, buf_size::Integer) where {T} = GeneralComm(Int64, T)
-(GeneralComm)(::Type{T}) where {T} = GeneralComm(Int64, T, 0)
-(GeneralComm)(buf_size::Integer) = GeneralComm(Int64, Any, buf_size)
-(GeneralComm)() = GeneralComm(Any, 0)
+GeneralComm(::Type{S}=Int64,
+            ::Type{T}=Any,
+            buf_size::Integer=0,
+            group::CommGroup=CommGroup()) where {S, T}
+   = GeneralComm{S, T}(buf_size, group)
 
 Base.size(comm::GeneralComm) = Base.size(comm.comm)
