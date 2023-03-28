@@ -1,3 +1,5 @@
+# TODO: add utilities for lazy initialization
+
 using Distributed
 
 function init_comm(name)
